@@ -15,7 +15,7 @@ class Rozetka(scrapy.Spider):
             if obj.css("div.goods-tile__availability::text").get() == "Нет в наличии":
                 continue
             url_all = obj.css("a.goods-tile__heading::attr(href)").get()
-            yield response.follow(url_all, self.unit_all_link)
+            yield scrapy.Request(url_all, self.unit_all_link)
         button_list = (response.css('a.button::attr(href)').getall())
         button_list.pop(-1)
         next_page = button_list[-1]
@@ -24,6 +24,10 @@ class Rozetka(scrapy.Spider):
             yield scrapy.Request(next_page, callback=self.parse)
 
     def unit_all_link(self, response):
+        # prices = response.xpath('//div[@class=\'product-about__block ng-star-inserted\']')
+        # print("QQQQQQQ",prices)
+        # for price in prices.xpath('//p'):
+        #     print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",price.get())
         links_dict = {}
         link_titles = response.css("a.tabs__link::text").getall()
         links = response.css("a.tabs__link::attr(href)").getall()
@@ -32,8 +36,9 @@ class Rozetka(scrapy.Spider):
         yield scrapy.Request(url=links_dict["Характеристики"],callback=self.characteristics)
 
     def characteristics(self,response):
-        characteristics = response.css("div.product-tabs__body main.product-tabs__content::text").get()
-        price = response.css("div.product-carriage__price.ng-star-inserted::text").get()
+        characteristics = response.xpath('//main[@class="product-tabs__content"]//text()').extract()
+        price = response.xpath('//aside[@class="product-tabs__sidebar"]/div[@class="product-carriage ng-star-inserted"]/'
+                               'div[@class="product-carriage__buy"]/div[@class="product-carriage__buy-top"]/div//text()').extract()
         print("!!!!",characteristics,price)
 
 
