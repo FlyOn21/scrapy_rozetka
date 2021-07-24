@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 import scrapy
 
 
@@ -12,10 +13,11 @@ class Rozetka(scrapy.Spider):
 
     def parse(self, response):
         for obj in response.css("div.goods-tile__inner"):
-            if obj.css("div.goods-tile__availability::text").get() == "Нет в наличии":
+            if (obj.css("div.goods-tile__availability::text").get()).strip() == "Нет в наличии":
                 continue
             url_all = obj.css("a.goods-tile__heading::attr(href)").get()
             yield scrapy.Request(url_all, self.unit_all_link)
+            yield self.selenium(url_all)
         button_list = (response.css('a.button::attr(href)').getall())
         button_list.pop(-1)
         next_page = button_list[-1]
@@ -24,10 +26,6 @@ class Rozetka(scrapy.Spider):
             yield scrapy.Request(next_page, callback=self.parse)
 
     def unit_all_link(self, response):
-        # prices = response.xpath('//div[@class=\'product-about__block ng-star-inserted\']')
-        # print("QQQQQQQ",prices)
-        # for price in prices.xpath('//p'):
-        #     print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",price.get())
         links_dict = {}
         link_titles = response.css("a.tabs__link::text").getall()
         links = response.css("a.tabs__link::attr(href)").getall()
@@ -37,28 +35,36 @@ class Rozetka(scrapy.Spider):
 
     def characteristics(self,response):
         characteristics = response.xpath('//main[@class="product-tabs__content"]//text()').extract()
-        price = response.xpath('//aside[@class="product-tabs__sidebar"]/div[@class="product-carriage ng-star-inserted"]/'
-                               'div[@class="product-carriage__buy"]/div[@class="product-carriage__buy-top"]/div//text()').extract()
-        print("!!!!",characteristics,price)
+        return characteristics
+
+    def reviews(self, response):
+        reviews = response.css()
 
 
     def selenium(self, url):
-        driver = webdriver.Chrome()
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        driver = webdriver.Chrome("/usr/lib/chromium-browser/chromedriver",chrome_options=chrome_options)
         driver.get(url)
+        result = {}
         try:
             button = WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located(
                     (By.CLASS_NAME, "button_type_link.product-about__description-toggle.ng-star-inserted")))
             button.click()
-            data = WebDriverWait(driver, 2).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "product-about__description.ng-star-inserted")))
-            result = data.text
-            # time.sleep(10)
+            spetification = WebDriverWait(driver, 2).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "product-about__description.ng-star-inserted"))).text
+            result["spetification"] = spetification
+        except:
+            result["spetification"] = False
+        try:
+            price = WebDriverWait(driver, 2).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "product-prices__inner.ng-star-inserted"))).text
+            result["price"] = price
+        except:
+            result["price"] = False
         finally:
             driver.quit()
-            return result
-
-#
-# if __name__ == "__main__":
-#     a = Rozetka()
-#     a.selenium()
+        return result
