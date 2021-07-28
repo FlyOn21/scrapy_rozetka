@@ -12,7 +12,7 @@ BOT_NAME = 'KoffeeMashines'
 SPIDER_MODULES = ['KoffeeMashines.spiders']
 NEWSPIDER_MODULE = 'KoffeeMashines.spiders'
 
-ITEM_PIPELINES = {'scrapy.pipelines.images.ImagesPipeline': 1}
+ITEM_PIPELINES = {'KoffeeMashines.pipelines.CustomImagesPipeline': 1}
 IMAGES_STORE = 'images'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'KoffeeMashines (+http://www.yourdomain.com)'

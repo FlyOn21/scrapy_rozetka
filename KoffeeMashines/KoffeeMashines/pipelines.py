@@ -11,6 +11,6 @@ from scrapy.pipelines.images import ImagesPipeline
 class CustomImagesPipeline(ImagesPipeline):
     def file_path(self, request, response=None, info=None, *, item=None):
         image_guid = request.url.split("/")[-1]
-        return f'full/{image_guid}.jpg'
+        return f'full/{image_guid}'
 
 

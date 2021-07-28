@@ -23,7 +23,7 @@ class RozetkaSpider(scrapy.Spider):
             if (obj.css("div.goods-tile__availability::text").get()).strip() == "Нет в наличии":
                 continue
             unit_url = obj.css("a.goods-tile__heading::attr(href)").get()
-            print("=======================",unit_url,"=======================")
+            # print("=======================",unit_url,"=======================")
             yield scrapy.Request(unit_url, self.unit_all_link)
             # yield self.selenium(url_all)
         button_list = (response.css('a.button::attr(href)').getall())
@@ -38,8 +38,11 @@ class RozetkaSpider(scrapy.Spider):
         links = response.css("a.tabs__link::attr(href)").getall()
         for link_title,link in zip(link_titles,links):
             self.links_dict[(link_title).strip()]=link
-        photo_data = self.photo(self.links_dict["Фото"])
-        characteristics_data = yield scrapy.Request(url=self.links_dict["Характеристики"],callback=self.characteristics)
+        photo_data = self.selenium_photo_urls(self.links_dict["Фото"])
+        yield {
+            "image_urls": photo_data,
+        }
+        # characteristics_data = yield scrapy.Request(url=self.links_dict["Характеристики"],callback=self.characteristics)
 
 
     def characteristics(self,response):
